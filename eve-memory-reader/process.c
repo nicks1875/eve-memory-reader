@@ -98,36 +98,60 @@ void get_process_name_from_pid(DWORD pid, char** process_name_out)
 	wcstombs_s(&i, *process_name_out, MAX_PATH, process_name, wcslen(process_name) + 1);
 }
 
-DWORD get_pid(char * process_name)
-{
-	DWORD pid = -1;
-	unsigned int i;
-	DWORD processes[1024], cb_needed, num_processes;
-	if (!EnumProcesses(processes, sizeof(processes), &cb_needed))
-	{
-		return 1;
-	}
+//DWORD get_pid(char * process_name)
+//{
+//	DWORD pid = -1;
+//	unsigned int i;
+//	DWORD processes[1024], cb_needed, num_processes;
+//	if (!EnumProcesses(processes, sizeof(processes), &cb_needed))
+//	{
+//		return 1;
+//	}
+//
+//	num_processes = cb_needed / sizeof(DWORD);
+//
+//	for (i = 0; i < num_processes; i++)
+//	{
+//		if (processes[i] != 0)
+//		{
+//			char* pid_process_name = malloc(sizeof(char) * MAX_PATH);
+//			get_process_name_from_pid(processes[i], &pid_process_name);
+//			if (pid_process_name != NULL && strcmp(pid_process_name, process_name) == 0)
+//			{
+//				pid = processes[i];
+//			}
+//			free(pid_process_name);
+//			if (pid != -1)
+//			{
+//				break;
+//			}
+//		}
+//	}
+//
+//	return pid;
+//}
 
-	num_processes = cb_needed / sizeof(DWORD);
+DWORD* get_pids(char *process_name, int max_pids, int *num_pids_found) {
+    DWORD processes[1024], cb_needed, num_processes;
+	DWORD* pids = malloc(max_pids * sizeof(DWORD)); //
+    int count = 0;
 
-	for (i = 0; i < num_processes; i++)
-	{
-		if (processes[i] != 0)
-		{
-			char* pid_process_name = malloc(sizeof(char) * MAX_PATH);
-			get_process_name_from_pid(processes[i], &pid_process_name);
-			if (pid_process_name != NULL && strcmp(pid_process_name, process_name) == 0)
-			{
-				pid = processes[i];
-			}
-			free(pid_process_name);
-			if (pid != -1)
-			{
-				break;
-			}
-		}
-	}
+    if (!EnumProcesses(processes, sizeof(processes), &cb_needed))
+        return 0;
 
-	return pid;
+    num_processes = cb_needed / sizeof(DWORD);
+    for (int i = 0; i < num_processes && count < max_pids; i++) {
+        if (processes[i] != 0) {
+            char* pid_process_name = malloc(sizeof(char) * MAX_PATH);
+            get_process_name_from_pid(processes[i], &pid_process_name);
+            if (pid_process_name != NULL && strcmp(pid_process_name, process_name) == 0) {
+                pids[count++] = processes[i];
+            }
+            free(pid_process_name);
+        }
+    }
+	
+	*num_pids_found = count;
+    return pids;
 }
 

@@ -1209,7 +1209,6 @@ __declspec(dllexport) void read_ui_trees()
 	}
 }
 
-
 void get_memory_and_root_addresses(DWORD pid)
 {
 	printf("reading committed memory...\n");
@@ -1226,21 +1225,20 @@ void get_memory_and_root_addresses(DWORD pid)
 	printf("Finished finding %I64u UIRoot candidates in %I64u seconds!\n", ui_roots->used, ui_roots_dur);
 }
 
-
 __declspec(dllexport) int initialize()
 {
+	int pid_count = 0;
 	primary_ui_root = 0;
-	DWORD pid = get_pid(PROCESS_NAME);
-	if (pid == -1)
-	{
-		printf("Process not found\n");
-		return 1;
-	}
-
+	
+	DWORD* pids = get_pids(PROCESS_NAME, 2, &pid_count);
+	
 	initialize_cache();
 	cache_last_flushed = (unsigned long)time(NULL);
-	printf("found %s process (pid: %d)\n", PROCESS_NAME, pid);
-	get_memory_and_root_addresses(pid);
+	
+    for (int i = 0; i < pid_count; i++) {
+        printf("Found %s process (pid: %lu)\n", PROCESS_NAME, pids[i]);
+        get_memory_and_root_addresses(pids[i]);
+    }
 	return 0;
 }
 
