@@ -37,7 +37,9 @@ class Bot(object):
     def initialize(self, process_pids):
         self.say("Initializing")
         self.say(f"detected screen size: {get_screensize()}", narrate=False)
-        self.tree = UITree(process_pids)
+        for process_pid in process_pids:
+            self.tree = UITree(process_pid)
+            break
         self.say("Ready")
 
     def check_pause_interrupt(self):

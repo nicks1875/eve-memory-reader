@@ -1,6 +1,6 @@
 {
-  "name": "EVE Online - Mining Bot",
-  "uses": "MiningBot",
+  "name": "EVE Online - Vanguard Bot",
+  "uses": "VanguardBot",
   "with_narration": true,
   "focus": true,
   "loop": true,
@@ -19,14 +19,12 @@
         "Scordite"
     ],
     "accounts": [
-        "EVE - Wild Aura",
-        "EVE - Ling Ling Sucki"
+        "EVE - Maker Bot",
+        "EVE - Artifactz"
     ]
   },
   "steps": [
-    "fleetup",
-    "mine_asteroids",
-    "compress"
+    "mine_asteroids"
   ],
   "emergency_steps": [
     "warp_to_station"

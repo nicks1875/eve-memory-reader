@@ -67,7 +67,6 @@ ULONGLONG find_max(const ULONGLONG* arr, UINT length) {
 
 void read_committed_memory_regions_from_pid(DWORD pid, BOOL with_content)
 {
-	printf("in function read_committed_memory_regions_from_pid \n");
 	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
 	ULONGLONG lpAddress = 0x0;
 	while (TRUE)
@@ -141,7 +140,6 @@ void read_committed_memory_regions_from_pid(DWORD pid, BOOL with_content)
 
 void get_process_sample_from_pid(DWORD pid)
 {
-	printf("in function get_process_sample_from_pid \n");
 	ps = malloc(sizeof(ProcessSample));
 	InitProcessSample(ps);
 	read_committed_memory_regions_from_pid(pid, TRUE);
@@ -160,7 +158,6 @@ byte* slice_byte_array(byte* original, ULONGLONG size, UINT start, UINT end)
 
 ULONGLONG cast_byte_array_to_ulong(byte* content, ULONGLONG size)
 {
-	printf("in function cast_byte_array_to_ulong \n");
 	ULONGLONG result = 0;
 	UINT i;
 	for (i = 0; i < size; ++i)
@@ -170,7 +167,6 @@ ULONGLONG cast_byte_array_to_ulong(byte* content, ULONGLONG size)
 
 ULONGLONG* cast_byte_array_to_ulong_array(byte* content, ULONGLONG size)
 {
-	printf("in function cast_byte_array_to_ulong_array \n");
 	ULONGLONG* result = malloc(sizeof(ULONGLONG) * (size/sizeof(ULONGLONG)));
 	UINT ulongs_created = 0;
 	UINT i;
@@ -192,7 +188,7 @@ ULONGLONG* cast_byte_array_to_ulong_array(byte* content, ULONGLONG size)
 
 byte* read_bytes(ULONGLONG address, ULONGLONG length, ULONGLONG* bytes_read)
 {
-	printf("in function read_bytes \n");
+
 	byte* regionContentBuffer = malloc(sizeof(byte) * length);
 	if (!ReadProcessMemory(hProcess, address, regionContentBuffer, _msize(regionContentBuffer), bytes_read))
 	{
@@ -226,7 +222,6 @@ byte* read_bytes(ULONGLONG address, ULONGLONG length, ULONGLONG* bytes_read)
 
 char* read_string_from_address(ULONGLONG address)
 {
-	printf("in function read_string_from_address \n");
 	ULONGLONG bytes_read = 0;
 	byte* as_memory = read_bytes(address, 0x100, &bytes_read);
 
@@ -252,7 +247,6 @@ char* read_string_from_address(ULONGLONG address)
 
 ULONGLONG* read_memory_region_content_as_ulong_array(CommittedRegion* cr)
 {
-	printf("in function read_memory_region_content_as_ulong_array \n");
 	ULONGLONG bytes_read = 0;
 	byte* as_byte_array = read_bytes(cr->address, cr->region_size, &bytes_read);
 
@@ -267,7 +261,6 @@ ULONGLONG* read_memory_region_content_as_ulong_array(CommittedRegion* cr)
 
 Addresses* find_python_type_object_type_candidates_within_region(CommittedRegion* cr)
 {
-	printf("in function find_python_type_object_type_candidates_within_region \n");
 	Addresses* candidates = malloc(sizeof(Addresses));
 	InitAddresses(candidates);
 	ULONGLONG* memory_region_ulong = read_memory_region_content_as_ulong_array(cr);
@@ -310,7 +303,6 @@ Addresses* find_python_type_object_type_candidates_within_region(CommittedRegion
 
 Addresses* find_python_type_object_type_candidates()
 {
-	printf("in function find_python_type_object_type_candidates \n");
 	Addresses* candidates = malloc(sizeof(Addresses));
 	InitAddresses(candidates);
 	unsigned int i;
@@ -325,7 +317,6 @@ Addresses* find_python_type_object_type_candidates()
 
 Addresses* find_python_type_objects_candidates_within_region(CommittedRegion* cr, Addresses* previous_candidates, ULONGLONG min_candidate, ULONGLONG max_candidate)
 {
-	printf("in function find_python_type_objects_candidates_within_region \n");
 	Addresses* candidates = malloc(sizeof(Addresses));
 	InitAddresses(candidates);
 	ULONGLONG* memory_region_ulong = read_memory_region_content_as_ulong_array(cr);
@@ -375,7 +366,6 @@ Addresses* find_python_type_objects_candidates_within_region(CommittedRegion* cr
 
 Addresses* find_python_type_objects_candidates(Addresses* previous_candidates)
 {
-	printf("in function find_python_type_objects_candidates \n");
 	if (previous_candidates->used < 1)
 		return NULL;
 
@@ -395,7 +385,6 @@ Addresses* find_python_type_objects_candidates(Addresses* previous_candidates)
 
 Addresses* find_python_type_candidates_within_region(CommittedRegion* cr, Addresses* previous_candidates, ULONGLONG min_candidate, ULONGLONG max_candidate)
 {
-	printf("in function find_python_type_candidates_within_region \n");
 	Addresses* candidates = malloc(sizeof(Addresses));
 	InitAddresses(candidates);
 	ULONGLONG* memory_region_ulong = read_memory_region_content_as_ulong_array(cr);
@@ -427,7 +416,6 @@ Addresses* find_python_type_candidates_within_region(CommittedRegion* cr, Addres
 
 Addresses* find_python_type_candidates(Addresses* previous_candidates)
 {
-	printf("in function find_python_type_candidates \n");
 	if (previous_candidates->used < 1)
 		return NULL;
 
@@ -445,7 +433,6 @@ Addresses* find_python_type_candidates(Addresses* previous_candidates)
 
 Addresses* find_ui_roots()
 {
-	printf("in function find_ui_roots \n");
 	Addresses* ptot_candidates = find_python_type_object_type_candidates();
 	Addresses* pto_candidates = find_python_type_objects_candidates(ptot_candidates);
 	Addresses* pt_candidates = find_python_type_candidates(pto_candidates);
@@ -484,7 +471,6 @@ BOOL string_array_contains(char* strings[], char* compareVal)
 
 char* get_python_type_name_from_python_type_object_address(ULONGLONG address)
 {
-	printf("in function get_python_type_name_from_python_type_object_address \n");
 	ULONGLONG bytes_read = 0;
 	byte* type_object_memory = read_bytes(address, 0x20, &bytes_read);
 
@@ -529,7 +515,6 @@ char* get_python_type_name_from_python_type_object_address(ULONGLONG address)
 
 char* get_python_type_name_from_python_object_address(ULONGLONG address)
 {
-	printf("in function get_python_type_name_from_python_object_address \n");
 	ULONGLONG hash_index = 0;
 	char* response = HashTableFind(python_type_name_cache, address, &hash_index, NULL);
 	if (response != NULL)
@@ -563,7 +548,6 @@ char* get_python_type_name_from_python_object_address(ULONGLONG address)
 
 PyDictEntryList* read_active_dictionary_entries_from_address(ULONGLONG address)
 {
-	printf("in function read_active_dictionary_entries_from_address \n");
 	ULONGLONG bytes_read = 0;
 	byte* dict_memory = read_bytes(address, 0x30, &bytes_read);
 
@@ -638,7 +622,6 @@ PyDictEntryList* read_active_dictionary_entries_from_address(ULONGLONG address)
 
 char* read_python_string_value(ULONGLONG address, ULONGLONG max_length)
 {
-	printf("in function read_python_string_value \n");
 	ULONGLONG hash_index = 0;
 	char* response = HashTableFind(python_string_value_cache, address, &hash_index, NULL);
 	if (response != NULL)
@@ -686,7 +669,6 @@ char* read_python_string_value(ULONGLONG address, ULONGLONG max_length)
 
 void read_python_type_str(ULONGLONG address, PythonDictValueRepresentation* repr)
 {
-	printf("in function read_python_type_str \n");
 	repr->is_string = TRUE;
 	repr->string_value = read_python_string_value(address, 0x1000);
 }
@@ -725,7 +707,6 @@ int utf8_encode(char* out, byte utf)
 
 void read_python_type_unicode(ULONGLONG address, PythonDictValueRepresentation* repr)
 {
-	printf("in function read_python_type_unicode \n");
 	ULONGLONG bytes_read = 0;
 	byte* python_object_memory = read_bytes(address, 0x20, &bytes_read);
 
@@ -790,7 +771,6 @@ void read_python_type_unicode(ULONGLONG address, PythonDictValueRepresentation* 
 
 void read_python_type_int(ULONGLONG address, PythonDictValueRepresentation* repr)
 {
-	printf("in function read_python_type_int \n");
 	ULONGLONG bytes_read = 0;
 	byte* int_object_memory = read_bytes(address, 0x18, &bytes_read);
 
@@ -821,7 +801,6 @@ void read_python_type_float(ULONGLONG address, PythonDictValueRepresentation* re
 
 void read_python_type_bool(ULONGLONG address, PythonDictValueRepresentation* repr)
 {
-	printf("in function read_python_type_bool \n");
 	ULONGLONG bytes_read = 0;
 	byte* bool_object_memory = read_bytes(address, 0x18, &bytes_read);
 
@@ -840,7 +819,6 @@ void read_python_type_bool(ULONGLONG address, PythonDictValueRepresentation* rep
 
 PyDictEntryList* get_dict_entries_with_string_keys(ULONGLONG address)
 {
-	printf("in function get_get_dict_entries_with_string_keys \n");
 	PyDictEntryList* dict_entries = read_active_dictionary_entries_from_address(address);
 
 	if (dict_entries == NULL)
@@ -861,7 +839,6 @@ void read_python_type_bunch(ULONGLONG address, PythonDictValueRepresentation* re
 
 PythonDictValueRepresentation* get_dict_entry_value_representation(ULONGLONG address)
 {
-	printf("in function get_dict_entry_value_representation \n");
 	char* python_type_name = get_python_type_name_from_python_object_address(address);
 	if (python_type_name == NULL)
 		return NULL;
@@ -908,7 +885,6 @@ PythonDictValueRepresentation* get_dict_entry_value_representation(ULONGLONG add
 
 UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, int max_depth, ULONGLONG* number_of_children)
 {
-	printf("in function read_children \n");
 	if (max_depth < 1)
 		return NULL;
 
@@ -1065,7 +1041,6 @@ UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, in
 
 UITreeNode* read_ui_tree_from_address(ULONGLONG address, int max_depth)
 {
-	printf("in function read_ui_tree_from_address \n");
 	ULONGLONG bytes_read = 0;
 	byte* ui_node_object_memory = read_bytes(address, 0x30, &bytes_read);
 
@@ -1200,20 +1175,17 @@ UITreeNode* read_ui_tree_from_address(ULONGLONG address, int max_depth)
 
 __declspec(dllexport) void free_ui_json()
 {
-	printf("in exported function free_ui_json \n");
 	free(ui_json);
 	ui_json = NULL;
 }
 
 __declspec(dllexport) char* get_ui_json()
 {
-	printf("in exported function get_ui_json \n");
 	return ui_json;
 }
 
 __declspec(dllexport) void read_ui_trees(DWORD pid)
 {
-	printf("in exported function read_ui_trees \n");
 	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
     if (hProcess == NULL) {
         // Handle error

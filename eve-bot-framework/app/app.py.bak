@@ -1,5 +1,4 @@
 import PySimpleGUI as sg
-import psutil
 import json
 import os.path
 import threading

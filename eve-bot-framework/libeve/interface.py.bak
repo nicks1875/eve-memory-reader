@@ -12,7 +12,7 @@ else:
 
 eve_memory_reader.initialize.argtypes = [ctypes.c_ulong]
 eve_memory_reader.initialize.restype = ctypes.c_int
-eve_memory_reader.read_ui_trees.argtypes = [ctypes.c_ulong]
+eve_memory_reader.read_ui_trees.argtypes = []
 eve_memory_reader.read_ui_trees.restype = None
 #eve_memory_reader.get_ui_json.argtypes = []
 #eve_memory_reader.get_ui_json.restype = ctypes.c_char_p

@@ -1,6 +1,6 @@
 {
-  "name": "EVE Online - Mining Bot",
-  "uses": "MiningBot",
+  "name": "EVE Online - Vanguard Bot",
+  "uses": "VanguardBot",
   "with_narration": true,
   "focus": true,
   "loop": true,
@@ -24,9 +24,7 @@
     ]
   },
   "steps": [
-    "fleetup",
-    "mine_asteroids",
-    "compress"
+    "mine_asteroids"
   ],
   "emergency_steps": [
     "warp_to_station"

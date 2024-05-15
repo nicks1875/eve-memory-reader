@@ -98,38 +98,35 @@ void get_process_name_from_pid(DWORD pid, char** process_name_out)
 	wcstombs_s(&i, *process_name_out, MAX_PATH, process_name, wcslen(process_name) + 1);
 }
 
-DWORD* get_pids(char* process_name)
+DWORD get_pid(char * process_name)
 {
-	DWORD* pids = calloc(2, sizeof(DWORD));
-	
-	pids[0] = pids[1] = -1;
-	
+	DWORD pid = -1;
 	unsigned int i;
-	
-    DWORD processes[1024], cb_needed, num_processes;
-    if (!EnumProcesses(processes, sizeof(processes), &cb_needed))
-    {
-        return NULL;
-    }
+	DWORD processes[1024], cb_needed, num_processes;
+	if (!EnumProcesses(processes, sizeof(processes), &cb_needed))
+	{
+		return 1;
+	}
 
 	num_processes = cb_needed / sizeof(DWORD);
-	int count = 0;
-	
-    for (i = 0; i < num_processes; i++)
-    {
-        if (processes[i] != 0)
-        {
-            char* pid_process_name = malloc(sizeof(char) * MAX_PATH);
-            get_process_name_from_pid(processes[i], &pid_process_name);
-            if (pid_process_name != NULL && strcmp(pid_process_name, process_name) == 0)
-            {
-                pids[count] = processes[i];
-                count++;
-                if (count >= 2) break;
-            }
-            free(pid_process_name);
-        }
-    }
 
-    return pids;
+	for (i = 0; i < num_processes; i++)
+	{
+		if (processes[i] != 0)
+		{
+			char* pid_process_name = malloc(sizeof(char) * MAX_PATH);
+			get_process_name_from_pid(processes[i], &pid_process_name);
+			if (pid_process_name != NULL && strcmp(pid_process_name, process_name) == 0)
+			{
+				pid = processes[i];
+			}
+			free(pid_process_name);
+			if (pid != -1)
+			{
+				break;
+			}
+		}
+	}
+
+	return pid;
 }
