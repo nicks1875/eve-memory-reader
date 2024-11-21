@@ -1,7 +1,7 @@
 from libeve.utils import get_screensize, window_enumeration_handler
 from libeve.interface import UITree
 
-import psutil
+import math
 import sys
 import time
 import threading
@@ -34,10 +34,10 @@ class Bot(object):
         self.paused = False
         self.tree = None
 
-    def initialize(self, process_pids):
+    def initialize(self):
         self.say("Initializing")
         self.say(f"detected screen size: {get_screensize()}", narrate=False)
-        self.tree = UITree(process_pids)
+        self.tree = UITree()
         self.say("Ready")
 
     def check_pause_interrupt(self):
@@ -89,35 +89,43 @@ class Bot(object):
         if narrate:
             self.speak(text)
 
-    def focus(self, windowName):
+    def focus(self, prefix="eve - "):
         self.check_interrupts()
         top_windows = []
         win32gui.EnumWindows(window_enumeration_handler, top_windows)
         for i in top_windows:
-            if windowName.lower() == i[1].lower():
+            if prefix in i[1].lower():
                 win32gui.ShowWindow(i[0], 5)
                 win32gui.SetForegroundWindow(i[0])
                 break
         time.sleep(1)
 
-    def move_cursor_to_node(self, node):
+    def move_cursor_to_node(self, node, x_offset=None, y_offset=None):
+        max_x, max_y = get_screensize()
         self.check_interrupts()
         x = (
             int(node.x * self.tree.width_ratio)
             + node.attrs.get("_displayWidth", 0) // 2
         )
+        if x_offset:
+            x = x + x_offset
         y = (
             int(node.y * self.tree.height_ratio)
             + node.attrs.get("_displayHeight", 0) // 2
         )
-        print(f"setting cursor to {x}, {y}")
-        win32api.SetCursorPos((x, y))
-        time.sleep(1)
+        if y_offset:
+            y = y + y_offset
+
+        # Prevent clicking outside main screen if any issues happen
+        if x < max_x and y < max_y and x > 0 and y > 0:
+            print(f"setting cursor to {x}, {y}")
+            win32api.SetCursorPos((x, y))
+            time.sleep(0.025)
         return x, y
 
-    def click_node(self, node, right_click=False, times=1, expect=[], expect_args={}):
+    def click_node(self, node, right_click=False, times=1, expect=[], expect_args={}, x_offset=None, y_offset=None):
         self.check_interrupts()
-        x, y = self.move_cursor_to_node(node)
+        x, y = self.move_cursor_to_node(node, x_offset, y_offset)
         down_event = (
             win32con.MOUSEEVENTF_RIGHTDOWN
             if right_click
@@ -128,9 +136,9 @@ class Bot(object):
         )
         for i in range(times):
             win32api.mouse_event(down_event, x, y, 0, 0)
-            time.sleep(1)
+            time.sleep(0.025)
             win32api.mouse_event(up_event, x, y, 0, 0)
-            time.sleep(1)
+            time.sleep(0.025)
             print("clicked")
         for expectation in expect:
             if not self.wait_for(expectation, until=10, **expect_args):
@@ -148,7 +156,7 @@ class Bot(object):
                     expect=expect,
                     expect_args=expect_args,
                 )
-        time.sleep(1)
+        time.sleep(0.025)
         return x, y
 
     def drag_node_to_node(self, src_node, dest_node):
@@ -181,7 +189,7 @@ class Bot(object):
         ):
             if until and time.time() - started >= until:
                 break
-        time.sleep(1)
+        time.sleep(0.010)
         return node
 
     def undock(self):

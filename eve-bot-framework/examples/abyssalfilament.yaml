@@ -1,10 +1,10 @@
 {
-  "name": "EVE Online - Vanguard Bot",
-  "uses": "VanguardBot",
+  "name": "EVE Online - AbyssalFilament Bot",
+  "uses": "AbyssalFilamentBot",
   "with_narration": true,
   "focus": true,
   "loop": true,
-  "start_from": "mine_asteroids",
+  "start_from": "main",
   "scanners": [
     "EnemyScanner"
   ],
@@ -17,14 +17,10 @@
     "asteroids_of_interest": [
         "Veldspar",
         "Scordite"
-    ],
-    "accounts": [
-        "EVE - Maker Bot",
-        "EVE - Artifactz"
     ]
   },
   "steps": [
-    "mine_asteroids"
+    "main"
   ],
   "emergency_steps": [
     "warp_to_station"

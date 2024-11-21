@@ -1,5 +1,4 @@
 import PySimpleGUI as sg
-import psutil
 import json
 import os.path
 import threading
@@ -74,18 +73,6 @@ class Application(object):
         self.bot_log.append(message)
         self.window["bot_log"].update("\n".join(self.bot_log))
 
-    def find_eve_process_pids(self):
-        eve_pids = []
-        for process in psutil.process_iter(['name', 'pid']):
-            try:
-                if process.info['name'].startswith("exefile"):
-                    eve_pids.append(process.info['pid'])
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-                
-        print("eve pids: " + str(eve_pids))
-        return eve_pids
-
     def initiate_driver(self):
         try:
             self.log("starting bot...")
@@ -99,8 +86,7 @@ class Application(object):
                 stop_safely_interrupt=self.stop_safely_interrupt,
                 stop_safely_callback=self.stop_safely_callback,
             )
-            process_pids = self.find_eve_process_pids()
-            self.driver.bot.initialize(process_pids)
+            self.driver.bot.initialize()
             self.driver.start()
         except Exception as e:
             self.log(f"error: {e}")

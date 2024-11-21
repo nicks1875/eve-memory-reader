@@ -7,8 +7,8 @@ from twilio.rest import Client
 
 from .bots.autopilot import AutoPilotBot
 from .bots.mining import MiningBot
-from .bots.vanguard import VanguardBot
-from libeve.interface import UITree
+from .bots.abyssalfilament import AbyssalFilamentBot
+
 
 account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
 auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
@@ -21,7 +21,7 @@ if twilio_configured:
 
 class BotDriver(object):
 
-    registered_bots = {"AutoPilotBot": AutoPilotBot, "MiningBot": MiningBot, "VanguardBot": VanguardBot}
+    registered_bots = {"AutoPilotBot": AutoPilotBot, "MiningBot": MiningBot, "AbyssalFilamentBot": AbyssalFilamentBot}
 
     def __init__(
         self,
@@ -67,7 +67,7 @@ class BotDriver(object):
             stop_safely_callback=self.stop_safely_callback,
             **self.args,
         )
-        
+
         self.start_scanners()
 
     def start_scanners(self):
@@ -75,28 +75,27 @@ class BotDriver(object):
         #    with ThreadPoolExecutor(max_workers=1) as executor:
         #        future = executor.submit(registered_scanners[scanner])
         pass
-        
+
     def start(self):
+        if not self.bot.tree:
+            return self.say("bot is not initialized!", narrate=False)
         try:
             while True:
-                for account in self.args.get("accounts"):
-                    print("Account: " + str(account))
-                    
-                    for step in self.driver.get("steps", list()):
-                        if not self.started and self.start_from and self.start_from != step:
-                            continue
-                        if self.focus_enabled:
-                            self.bot.focus(account)
-                        self.started = True
-                        fn = getattr(self.bot, step)
-                        if not (fn and callable(fn)):
-                            raise Exception(
-                                f"`{step}` is not a registered action in bot `{self.bot_name}`"
-                            )
-                        self.log_fn(f"== running step: {step}")
-                        fn()
-                    if not self.loop:
-                        break
+                for step in self.driver.get("steps", list()):
+                    if not self.started and self.start_from and self.start_from != step:
+                        continue
+                    if self.focus_enabled:
+                        self.bot.focus()
+                    self.started = True
+                    fn = getattr(self.bot, step)
+                    if not (fn and callable(fn)):
+                        raise Exception(
+                            f"`{step}` is not a registered action in bot `{self.bot_name}`"
+                        )
+                    self.log_fn(f"== running step: {step}")
+                    fn()
+                if not self.loop:
+                    break
         except Exception as e:
             traceback.print_exc()
             if twilio_configured and self.sms_number:

@@ -6,7 +6,7 @@
 
 
 void get_process_name_from_pid(DWORD, char**);
-DWORD* get_pids(char*);
+DWORD get_pid(char*);
 
 typedef struct
 {

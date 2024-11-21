@@ -123,7 +123,6 @@ char* PrintUITreeNodeDictEntryList(UITreeNodeDictEntryList* del)
 		if (del->data[i] == NULL || del->data[i]->key == NULL || del->data[i]->value == NULL)
 			continue;
 
-		// print the key
 		sprintf_s(response, 5000, "%s\"%s\": ", response, del->data[i]->key);
 
 		// print the value
@@ -133,9 +132,9 @@ char* PrintUITreeNodeDictEntryList(UITreeNodeDictEntryList* del)
 			sprintf_s(response, 5000, "%s\"%s\",", response, del->data[i]->value->unicode_value);
 		else if (del->data[i]->value->is_int)
 			sprintf_s(response, 5000, "%s%d,", response, del->data[i]->value->int_value);
-		else if (del->data[i]->value->is_float)
+		else if (del->data[i]->value->is_float) {
 			sprintf_s(response, 5000, "%s%f,", response, del->data[i]->value->float_value);
-		else if (del->data[i]->value->is_bool)
+		} else if (del->data[i]->value->is_bool)
 			sprintf_s(response, 5000, "%s%s,", response, del->data[i]->value->bool_value ? "true" : "false");
 		else
 			sprintf_s(response, 5000, "%snull,", response);

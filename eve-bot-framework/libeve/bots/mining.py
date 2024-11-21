@@ -25,7 +25,6 @@ class MiningBot(Bot):
         number_of_miners=1,
         shields=None,
         asteroids_of_interest=[],
-        accounts=[],
         fleet_commander=None,
     ):
         super().__init__(
@@ -44,7 +43,6 @@ class MiningBot(Bot):
         self.shields = shields
         self.asteroids_of_interest = asteroids_of_interest
         self.fleet_commander = fleet_commander
-        self.accounts = accounts
         self.trip_id = ""
         self.current_asteroid = None
         self.asteroids_mined = 0
@@ -797,15 +795,29 @@ class MiningBot(Bot):
             return False
 
     def mine_asteroids(self):
-        if self.trip_id == "":
-            self.new_trip()
-        if self.deploy_drones_while_mining:
-            self.deploy_drones()
-        if self.shields:
-            self.enable_shields()
-        while not self.cargo_is_full():
-            if self.find_asteroid() == -1:
-                break
-            if self.deploy_drones_while_mining:
-                self.deploy_drones()
-            self.mine_asteroid()
+        # if self.trip_id == "":
+        #     self.new_trip()
+        # if self.deploy_drones_while_mining:
+        #     self.deploy_drones()
+        # if self.shields:
+        #     self.enable_shields()
+        # while not self.cargo_is_full():
+        #     if self.find_asteroid() == -1:
+        #         break
+        #     if self.deploy_drones_while_mining:
+        #         self.deploy_drones()
+        #     self.mine_asteroid()
+        self.say("using filament")
+        inventorySearchArea = self.tree.find_node({"_name": "hintTextLabel", "_setText": "Search"}, type="LabelOverride")
+        if inventorySearchArea:
+            self.click_node(inventorySearchArea)
+        else:
+            print("inventory search area not found")
+
+    def use_filament(self):
+        self.say("using filament")
+        inventorySearchArea = self.tree.find_node({"_name": "hintTextLabel", "_setText": "Search"}, type="LabelOverride")
+        if inventorySearchArea:
+            self.click_node(inventorySearchArea)
+        else:
+            print("inventory search area not found")

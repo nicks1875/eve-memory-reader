@@ -10,16 +10,17 @@ if os.environ.get("ENV", "production") == "production":
 else:
     eve_memory_reader = ctypes.WinDLL("../x64/Release/eve-memory-reader.dll")
 
-eve_memory_reader.initialize.argtypes = [ctypes.c_ulong]
+eve_memory_reader.initialize.argtypes = []
 eve_memory_reader.initialize.restype = ctypes.c_int
-eve_memory_reader.read_ui_trees.argtypes = [ctypes.c_ulong]
+eve_memory_reader.read_ui_trees.argtypes = []
 eve_memory_reader.read_ui_trees.restype = None
-#eve_memory_reader.get_ui_json.argtypes = []
-#eve_memory_reader.get_ui_json.restype = ctypes.c_char_p
+eve_memory_reader.get_ui_json.argtypes = []
+eve_memory_reader.get_ui_json.restype = ctypes.c_char_p
 eve_memory_reader.free_ui_json.argtypes = []
 eve_memory_reader.free_ui_json.restype = None
 eve_memory_reader.cleanup.argtypes = []
 eve_memory_reader.cleanup.restype = None
+
 
 class UITreeNode(object):
     def __init__(self, **node):
@@ -33,26 +34,20 @@ class UITreeNode(object):
         self.children: list[int] = list()
         for child in node.get("children", list()):
             self.children.append(child.get("address"))
-            
-class UITree:
-    def __init__(self, process_pids):
-        self.process_pids = process_pids
-        self.nodes = {}
+
+
+class UITree(object):
+    def __init__(self):
+        self.nodes: dict[int, UITreeNode] = dict()
         self.width_ratio = 0
         self.height_ratio = 0
-        self.initialized_pids = []
-        for pid in self.process_pids:
-            ret = eve_memory_reader.initialize(pid)
-            if ret == 0:
-                self.initialized_pids.append(pid)
-            else:
-                raise Exception(f"Failed to initialize for PID {pid}: {ret}")
-            break
-        #self.refresh()
+        ret = eve_memory_reader.initialize()
+        if ret != 0:
+            raise Exception(f"Failed to initialize: {ret}")
+        self.refresh()
 
     def cleanup(self):
-        for pid in self.initialized_pids:
-            eve_memory_reader.cleanup()
+        eve_memory_reader.cleanup()
 
     def ingest(self, tree, x=0, y=0, parent=None):
         node = UITreeNode(**{**tree, **dict(x=x, y=y, parent=parent)})
@@ -78,29 +73,29 @@ class UITree:
             self.refresh()
 
     def refresh(self):
-        print("in refresh: ")
-        for pid in self.initialized_pids:
-            eve_memory_reader.read_ui_trees(pid)
-            tree_bytes = eve_memory_reader.get_ui_json()
-            eve_memory_reader.free_ui_json()
-            if not tree_bytes:
-                print("no ui trees found")
-                return
-            try:
-                tree_str = tree_bytes.decode("utf-8", errors="ignore")
-                with open("super.debug.json", "w") as super_debug_json:
-                    super_debug_json.write(tree_str)
-                tree = json.loads(tree_str)
-                self.load(tree)
-                with open("debug.json", "w") as debug_file:
-                    debug_file.write(json.dumps(tree, indent=2))
-            except UnicodeDecodeError as e:
-                print(f"error reading ui trees: {e}")
-                return
-            except ValueError as e:
-                print(f"error reading ui trees: {e}")
-                return
+        eve_memory_reader.read_ui_trees()
+        tree_bytes = eve_memory_reader.get_ui_json()
+        eve_memory_reader.free_ui_json()
+        if not tree_bytes:
+            print("no ui trees found")
+            return
+        try:
+            tree_str = tree_bytes.decode("utf-8", errors="ignore")
+            with open("super.debug.json", "w") as super_debug_json:
+                super_debug_json.write(tree_str)
+            tree = json.loads(tree_str)
+            self.load(tree)
+            with open("debug.json", "w") as debug_file:
+                debug_file.write(json.dumps(tree, indent=2))
+        except UnicodeDecodeError as e:
+            print(f"error reading ui trees: {e}")
+            return
+        except ValueError as e:
+            print(f"error reading ui trees: {e}")
+            return
 
+    # TODO create a find node within subnode function or arg to search within a single node for some arg - used to find distance on each target and which drones are attacking
+    # TODO create a find top level parent node - used for finding which drones are deployed in space with "type": "DroneInSpaceEntry"
     def find_node(
         self, query={}, address=None, type=None, select_many=False, contains=False
     ):

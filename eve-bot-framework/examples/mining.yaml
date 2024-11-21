@@ -4,7 +4,7 @@
   "with_narration": true,
   "focus": true,
   "loop": true,
-  "start_from": "mine_asteroids",
+  "start_from": "use_filament",
   "scanners": [
     "EnemyScanner"
   ],
@@ -17,13 +17,10 @@
     "asteroids_of_interest": [
         "Veldspar",
         "Scordite"
-    ],
-    "accounts": [
-        "EVE - Wild Aura",
-        "EVE - Ling Ling Sucki"
     ]
   },
   "steps": [
+    "use_filament",
     "fleetup",
     "mine_asteroids",
     "compress"

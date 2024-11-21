@@ -1,5 +1,6 @@
 pywin32
 twilio
+pyautogui
 pysimplegui
 pyinstaller
 Werkzeug <= 2.1.2   

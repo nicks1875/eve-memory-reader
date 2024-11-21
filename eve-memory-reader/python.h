@@ -20,7 +20,7 @@ typedef struct {
 	char* unicode_value;
 	INT int_value;
 	BOOL bool_value;
-	FLOAT float_value;
+	double float_value;
 } PythonDictValueRepresentation;
 
 typedef struct {
