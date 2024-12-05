@@ -93,7 +93,7 @@ class UITree(object):
         except ValueError as e:
             print(f"error reading ui trees: {e}")
             return
-
+        
     # TODO create a find node within subnode function or arg to search within a single node for some arg - used to find distance on each target and which drones are attacking
     # TODO create a find top level parent node - used for finding which drones are deployed in space with "type": "DroneInSpaceEntry"
     def find_node(
@@ -122,3 +122,65 @@ class UITree(object):
         if nodes and not select_many:
             return nodes[0]
         return nodes
+
+    def find_root_node(self, address, stop_at_value):
+        node = self.find_node(address=address)
+        current_node = node
+        while current_node.parent:
+            #print(f"current node parent: {current_node.parent}")
+            current_node = self.find_node(address=current_node.parent)
+            if current_node.type == stop_at_value:
+                #print("broke out of while loop")
+                return current_node
+            
+        return None
+
+    # def find_child_node(self, address, stop_at_key, stop_at_value):
+    #     node = self.find_node(address=address)
+    #     current_node = node
+    #     print(f"current node: {current_node.address}")
+    #     while current_node.children:
+    #         print(f"current node childrern: {current_node.children}")
+    #         for child in current_node.children:
+    #             node = self.find_node(address=child)
+    #             print(f"child node type: {node.type}")
+    #             print(f"child node address: {node.address}")
+
+    #         current_node
+    #         if current_node.type == stop_at_value:
+    #             #print("broke out of while loop")
+    #             return current_node
+            
+    #     return None
+
+    def find_child_node(self, address, stop_at_key, stop_at_value):
+        def recursive_search(node):
+            
+            # Not sure why returning list but skip if it does to avoid breaking anything
+            if isinstance(node, list):
+                return None
+            
+            # Check if the current node has the desired key-value pair
+            #if getattr(node, stop_at_key, None) == stop_at_value:
+            if node.attrs.get(stop_at_key, None) == stop_at_value:
+                return node
+            
+            # If the node has children, iterate through them
+            for child_address in node.children:
+                child_node = self.find_node(address=child_address)
+                #print(f"Inspecting child node: {child_node.address}, {stop_at_key}: {child_node.attrs}")
+                
+                # Recursively search the child node
+                result = recursive_search(child_node)
+                if result:  # If a match is found, return it immediately
+                    return result
+            
+            # Return None if no match is found in the current branch
+            return None
+        
+        # Start the search from the provided address
+        root_node = self.find_node(address=address)
+        #print(f"Starting search from node: {root_node.address}")
+        
+        # Perform the recursive search
+        return recursive_search(root_node)

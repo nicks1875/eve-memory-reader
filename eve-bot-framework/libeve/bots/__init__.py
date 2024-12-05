@@ -116,11 +116,18 @@ class Bot(object):
         if y_offset:
             y = y + y_offset
 
+        # prevent float values for clicking nodes as this doesnt work
+        if isinstance(x, (int, float)):
+            x = int(x)
+        if isinstance(y, (int, float)):
+            y = int(y)
+
         # Prevent clicking outside main screen if any issues happen
         if x < max_x and y < max_y and x > 0 and y > 0:
-            print(f"setting cursor to {x}, {y}")
+            #print(f"setting cursor to {x}, {y}")
             win32api.SetCursorPos((x, y))
             time.sleep(0.025)
+            
         return x, y
 
     def click_node(self, node, right_click=False, times=1, expect=[], expect_args={}, x_offset=None, y_offset=None):
@@ -139,7 +146,7 @@ class Bot(object):
             time.sleep(0.025)
             win32api.mouse_event(up_event, x, y, 0, 0)
             time.sleep(0.025)
-            print("clicked")
+
         for expectation in expect:
             if not self.wait_for(expectation, until=10, **expect_args):
                 win32api.mouse_event(down_event, x, y, 0, 0)
@@ -167,7 +174,7 @@ class Bot(object):
         x, y = self.move_cursor_to_node(dest_node)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)
         time.sleep(1)
-        print("dragged")
+
         return x, y
 
     def wait_for(

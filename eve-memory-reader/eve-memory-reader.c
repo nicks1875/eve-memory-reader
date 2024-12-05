@@ -1213,7 +1213,7 @@ __declspec(dllexport) char* get_ui_json()
 
 __declspec(dllexport) void read_ui_trees()
 {
-	if ((unsigned long)time(NULL) - cache_last_flushed > 30)
+	if ((unsigned long)time(NULL) - cache_last_flushed > 5)
 	{
 		printf("flushing cache...\n");
 		int total_flushed = 0;

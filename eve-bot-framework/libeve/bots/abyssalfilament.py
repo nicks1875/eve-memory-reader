@@ -4,6 +4,7 @@ from libeve.bots import Bot
 from libeve.interface import UITreeNode
 import pyautogui as gui
 
+import inspect
 import string
 import random
 import time
@@ -49,17 +50,10 @@ class AbyssalFilamentBot(Bot):
         self.shields_enabled = False
 
     def use_filament(self):
-        print("in use_filament")
+        self.say("in use_filament")
+        start_time = time.perf_counter()
         #self.wait_for({"_name": "aaaaaaaaaa"}, type="MenuEntryView")
-        
-        # test = self.wait_for({"_name": "shieldGauge"}, type="HealthGauge")
-        # test_node_id = test.children[-1]
-        # drone_shield_damage_node = self.tree.nodes[test_node_id]
-        # #print(f"drone armor damage node id: {drone_armor_damage_node}")
-        # current_drone_shield_hp_percent  = drone_shield_damage_node.attrs['_displayX'] / (drone_shield_damage_node.attrs['_displayX'] + drone_shield_damage_node.attrs['_displayWidth'])
-        # self.say(f"current drone shield: {current_drone_shield_hp_percent}")
-
-        
+    
         #filament_type = "Chaotic Gamma Filament"
         filament_type = "Fierce Gamma Filament"
         inventorySearchArea = self.tree.find_node({"_name": "hintTextLabel", "_setText": "Search"}, type="LabelOverride")
@@ -85,15 +79,24 @@ class AbyssalFilamentBot(Bot):
 
             activateFilamentButton = self.wait_for({"_setText": "Activate"}, type="EveLabelMedium")
 
+            clear_inventory_search_button = self.tree.find_node({"_hint": "Clear filters"}, type="ButtonIcon")
+            if clear_inventory_search_button:
+                self.click_node(clear_inventory_search_button)
+
             self.click_node(activateFilamentButton)
 
         else:
             self.say(f"no {filament_type} found in inventory. Need to return to station to get more")
 
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")
+
     def ensure_active_modules_on(self):
-        print("in ensure_active_modules_on")
+        self.say("in ensure_active_modules_on")
+        start_time = time.perf_counter()
         # Check if multispectrum shield hardener II is active and use if it isnt
-        check_shield_hardener_active = self.wait_for({"_name": "ModuleButton_2281", "ramp_active": True}, type="ModuleButton", until=0.005)
+        check_shield_hardener_active = self.tree.find_node({"_name": "ModuleButton_2281", "ramp_active": True}, type="ModuleButton")
         if not check_shield_hardener_active:
             click_shield_hardener = self.tree.find_node({"_name": "ModuleButton_2281"}, type="ModuleButton")
             self.click_node(click_shield_hardener)
@@ -101,15 +104,20 @@ class AbyssalFilamentBot(Bot):
         time.sleep(0.5)
 
         # Check if 10MN Afterburner II is active and use if it isnt
-        check_afterburner_active = self.wait_for({"_name": "ModuleButton_12058", "ramp_active": True}, type="ModuleButton", until=0.005)
+        check_afterburner_active = self.tree.find_node({"_name": "ModuleButton_12058", "ramp_active": True}, type="ModuleButton")
         if not check_afterburner_active:
             click_afterburner = self.tree.find_node({"_name": "ModuleButton_12058"}, type="ModuleButton")
             self.click_node(click_afterburner)
 
-        time.sleep(0.5)        
+        time.sleep(0.5)   
+
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")     
 
     def start_room(self):
-        print("in start_room")
+        self.say("in start_room")
+        start_time = time.perf_counter()
         # wait for bioadaptive cache to appear on overview to tell when you're in the filament room
         self.wait_for({"_text": "Triglavian Bioadaptive Cache"}, type="OverviewLabel", contains=True)
 
@@ -127,8 +135,20 @@ class AbyssalFilamentBot(Bot):
         if orbit_loot_cache:
             self.click_node(orbit_loot_cache)
 
+        # Deploy drones initially without checking hp
+        gui.keyDown('shift')
+        time.sleep(0.05)
+        gui.press('f')
+        time.sleep(0.05)
+        gui.keyUp('shift')
+
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")
+
     def count_enemies(self):
-        print("in count_enemies")
+        self.say("in count_enemies")
+        start_time = time.perf_counter()
         overview_enemies = self.tree.find_node({"_name": "scrollentry"}, type="OverviewScrollEntry", select_many=True, contains=True)
 
         enemy_count = 0
@@ -138,144 +158,188 @@ class AbyssalFilamentBot(Bot):
             if enemy_name_field != "scrollentry_49662" and enemy_name_field != "scrollentry_47951" and enemy_name_field != "scrollentry_49661" and enemy_name_field != "scrollentry_48253" and enemy_name_field != None:
                 enemy_count = enemy_count + 1
 
-        print(f"number of enemies: {enemy_count}")
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")
+        self.say(f"number of enemies: {enemy_count}")
         return enemy_count
 
     def check_room_type(self):
-        print("in check_room_type")
+        self.say("in check_room_type")
+        start_time = time.perf_counter()
         target_priority_list = ["Any"] # Default target priority list if room type cannot be determined
 
-        trig_frigate = self.wait_for({"_text": "Damavik"}, type="OverviewLabel", until=0.005, contains=True)
-        trig_destroyer = self.wait_for({"_text": "Kikimora"}, type="OverviewLabel", until=0.005, contains=True)
-        trig_cruiser1 = self.wait_for({"_text": "Vedmak"}, type="OverviewLabel", until=0.005, contains=True)
-        trig_cruiser2 = self.wait_for({"_text": "Rodiva"}, type="OverviewLabel", until=0.005, contains=True)
-        trig_battlecruiser = self.wait_for({"_text": "Drekavac"}, type="OverviewLabel", until=0.005, contains=True)
-        trig_battleship = self.wait_for({"_text": "Leshak"}, type="OverviewLabel", until=0.005, contains=True)
+        trig_frigate = self.tree.find_node({"_text": "Damavik"}, type="OverviewLabel", contains=True)
+        trig_destroyer = self.tree.find_node({"_text": "Kikimora"}, type="OverviewLabel", contains=True)
+        trig_cruiser1 = self.tree.find_node({"_text": "Vedmak"}, type="OverviewLabel", contains=True)
+        trig_cruiser2 = self.tree.find_node({"_text": "Rodiva"}, type="OverviewLabel", contains=True)
+        trig_battlecruiser = self.tree.find_node({"_text": "Drekavac"}, type="OverviewLabel", contains=True)
+        trig_battleship = self.tree.find_node({"_text": "Leshak"}, type="OverviewLabel", contains=True)
 
         if trig_frigate or trig_destroyer or trig_cruiser1 or trig_cruiser2 or trig_battlecruiser or trig_battleship:
             room_type = "Triglavian"
-            print(f"Room type is {room_type}")
+            self.say(f"Room type is {room_type}")
             target_priority_list = ["Starving Damavik", "Starving Vedmak", "Starving Leshak", "Renewing", "Striking", "Ghosting", "Any"]
+            drone_recall_percent = 0.75
 
-        edencom_ship = self.wait_for({"_text": "Disparu Troop"}, type="OverviewLabel", until=0.005, contains=True)
+        edencom_ship = self.tree.find_node({"_text": "Disparu Troop"}, type="OverviewLabel", contains=True)
 
         if edencom_ship:
             room_type = "Edencom"
-            print(f"Room type is {room_type}")
+            self.say(f"Room type is {room_type}")
             target_priority_list = ["Drainer Marshal Disparu Troop", "Drainer Enforcer Disparu Troop", "Drainer Pacifier Disparu Troop", "Marshal Disparu Troop", "Any"]
+            drone_recall_percent = 0.5
         
-        angel_ship = self.wait_for({"_text": "Lucifer"}, type="OverviewLabel", until=0.005, contains=True)
+        angel_ship = self.tree.find_node({"_text": "Lucifer"}, type="OverviewLabel", contains=True)
 
         if angel_ship:
             room_type = "Angel"
-            print(f"Room type is {room_type}")
+            self.say(f"Room type is {room_type}")
             target_priority_list = ["Lucifer Fury", "Lucifer Cynabal", "Elite Lucifer Cynabal", "Lucifer Echo", "Any"]
+            drone_recall_percent = 0.75
         
-        drifter_ship1 = self.wait_for({"_text": "Lucid"}, type="OverviewLabel", until=0.005, contains=True)
-        drifter_ship2 = self.wait_for({"_text": "Ephialtes"}, type="OverviewLabel", until=0.005, contains=True)
-        drifter_ship3 = self.wait_for({"_text": "Scylla"}, type="OverviewLabel", until=0.005, contains=True)
-        drifter_ship4 = self.wait_for({"_text": "Karybdis Tyrannos"}, type="OverviewLabel", until=0.005, contains=True)
+        drifter_ship1 = self.tree.find_node({"_text": "Lucid"}, type="OverviewLabel", contains=True)
+        drifter_ship2 = self.tree.find_node({"_text": "Ephialtes"}, type="OverviewLabel", contains=True)
+        drifter_ship3 = self.tree.find_node({"_text": "Scylla"}, type="OverviewLabel", contains=True)
+        drifter_ship4 = self.tree.find_node({"_text": "Karybdis Tyrannos"}, type="OverviewLabel", contains=True)
 
         if drifter_ship1 or drifter_ship2 or drifter_ship3 or drifter_ship4:
             room_type = "Sleeper"
-            print(f"Room type is {room_type}")
+            self.say(f"Room type is {room_type}")
             target_priority_list = ["Lucid Firewatcher", "Ephialtes Dissipator", "Scylla Tyrannos", "Lucid Sentinel", "Karybdis Tyrannos", "Lucid Deepwatcher", "Any"]
+            drone_recall_percent = 0.75
 
-        sansha_ship = self.wait_for({"_text": "Devoted"}, type="OverviewLabel", until=0.005, contains=True)
+        sansha_ship = self.tree.find_node({"_text": "Devoted"}, type="OverviewLabel", contains=True)
         if sansha_ship:
             room_type = "Sansha"
-            print(f"Room type is {room_type}")
+            self.say(f"Room type is {room_type}")
             target_priority_list = ["Devoted Smith", "Devoted Knight", "Any"]
+            drone_recall_percent = 0.5
         
-        rogue_drone_ship1 = self.wait_for({"_text": "Tessella"}, type="OverviewLabel", until=0.005, contains=True)
-        rogue_drone_ship2 = self.wait_for({"_text": "Tessera"}, type="OverviewLabel", until=0.005, contains=True)
-        rogue_drone_ship3 = self.wait_for({"_text": "Overmind"}, type="OverviewLabel", until=0.005, contains=True)
+        rogue_drone_ship1 = self.tree.find_node({"_text": "Tessella"}, type="OverviewLabel", contains=True)
+        rogue_drone_ship2 = self.tree.find_node({"_text": "Tessera"}, type="OverviewLabel", contains=True)
+        rogue_drone_ship3 = self.tree.find_node({"_text": "Overmind"}, type="OverviewLabel", contains=True)
 
         if rogue_drone_ship1 or rogue_drone_ship2 or rogue_drone_ship3:
             room_type = "Rogue Drone"
-            print(f"Room type is {room_type}")
+            self.say(f"Room type is {room_type}")
             target_priority_list = ["Plateforger Tessella", "Fieldweaver Tessella", "Overmind", "Fogcaster Tessella", "Any"]
+            drone_recall_percent = 0.75
         
-        return target_priority_list
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")
 
-    #def get_targets(self):
+        return target_priority_list, drone_recall_percent
+
     def get_targets(self, target_priority_list):
-        print("in get_targets")
+        self.say("in get_targets")
+        start_time = time.perf_counter()
         max_targets = 7
         # there exists at least 1 enemy on overview so room is not done
         #target_priority_list = ["Starving Damavik", "Starving Vedmak", "Starving Leshak", "Renewing", "Striking", "Ghosting", "Any"]
 
         targets_clicked = 0
 
-        for target in target_priority_list:
+        num__targets_locked = self.tree.find_node(type="ActiveTargetOnBracket", select_many=True)
+        if len(num__targets_locked) < 3:
+            
+            for target in target_priority_list:
 
-            if targets_clicked >= max_targets:
-                break
-            if target == "Any": # Lock any enemy present. Have to find a different UI element to search for them instead
-                overview_enemies = self.tree.find_node({"_name": "scrollentry"}, type="OverviewScrollEntry", select_many=True, contains=True)
-                for enemy in overview_enemies:
-                    enemy_name = enemy.attrs.get("_name", None)
-                    if enemy_name != "scrollentry_49662" and enemy_name != "scrollentry_47951" and enemy_name != "scrollentry_49661"  and enemy_name != "scrollentry_49661" and enemy_name != "scrollentry_48253" and enemy_name != None:
-                        print(f"Clicking target {enemy_name}")
-                        gui.keyDown('ctrl')
-                        time.sleep(0.050)
-                        self.click_node(enemy)
-                        targets_clicked = targets_clicked + 1
-                        time.sleep(0.050)
-                        gui.keyUp('ctrl')
-            else:
-                overview_enemies = self.tree.find_node({"_text": target}, type="OverviewLabel", select_many=True, contains=True)
-                for enemy in overview_enemies:
-                    print(f"Clicking target {target}")
-                    gui.keyDown('ctrl')
-                    time.sleep(0.050)
-                    self.click_node(enemy)
-                    targets_clicked = targets_clicked + 1
-                    time.sleep(0.050)
-                    gui.keyUp('ctrl')
+                    if targets_clicked >= max_targets:
+                        break
+                    if target == "Any": # Lock any enemy present. Have to find a different UI element to search for them instead
+                        overview_enemies = self.tree.find_node({"_name": "scrollentry"}, type="OverviewScrollEntry", select_many=True, contains=True)
+                        for enemy in overview_enemies:
+                            
+                            enemy_name = enemy.attrs.get("_name", None)
+                            if enemy_name != "scrollentry_49662" and enemy_name != "scrollentry_47951" and enemy_name != "scrollentry_49661"  and enemy_name != "scrollentry_49661" and enemy_name != "scrollentry_48253" and enemy_name != None:
+                                self.say(f"Clicking target {enemy_name}")
+                                gui.keyDown('ctrl')
+                                time.sleep(0.005)
+                                self.click_node(enemy)
+                                targets_clicked = targets_clicked + 1
+                                time.sleep(0.005)
+                                gui.keyUp('ctrl')
+                    else:
+                        overview_enemies = self.tree.find_node({"_text": target, "_hint": target}, type="OverviewLabel", select_many=True, contains=True)
+                        for enemy in overview_enemies:
+                            self.say(f"Clicking target {target}")
+                            gui.keyDown('ctrl')
+                            time.sleep(0.005)
+                            self.click_node(enemy)
+                            targets_clicked = targets_clicked + 1
+                            time.sleep(0.005)
+                            gui.keyUp('ctrl')
 
-        #time.sleep(0.5)
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")
 
-    def ensure_drones_deployed(self):
-        print("in ensure_drones_deployed")
-        drones_deployed = self.wait_for({"_name": "entry_"}, type="DroneInSpaceEntry", contains=True, select_many=True, until=0.05)
-        num_drones_deployed = len(drones_deployed)
-        if num_drones_deployed < 2:
-            gui.keyDown('shift')
-            time.sleep(0.05)
-            gui.press('f')
-            time.sleep(0.05)
-            gui.keyUp('shift')
+    def ensure_drones_deployed(self, drone_recall_percent):
+        self.say("in ensure_drones_deployed")
+        start_time = time.perf_counter()
+
+        drone_in_bay = self.tree.find_node({"_name": "entry_"}, type="DroneInBayEntry", contains=True)
+
+        shield_node = self.tree.find_child_node(address=drone_in_bay.address, stop_at_key="_name", stop_at_value="shieldGauge")
+        if shield_node:
+            drone_shield_node = self.tree.nodes[shield_node.children[-1]]
+            drone_bay_current_shield_hp_percent = drone_shield_node.attrs['_displayX'] / (drone_shield_node.attrs['_displayX'] + drone_shield_node.attrs['_displayWidth'])
+            
+            if drone_bay_current_shield_hp_percent >= drone_recall_percent:
+                
+                self.click_node(shield_node, right_click=True)
+                time.sleep(0.5)
+                launch_drone_text = self.wait_for({"_setText": "Launch Drone"}, type="TextBody", until=1.5)
+                if launch_drone_text:
+                    self.click_node(launch_drone_text)
+                
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")
 
     def ensure_drones_attacking(self, target_priority_list):
-        print("in ensure_drones_attacking")
-        drones_attacking = self.wait_for({"_hint": "Drones Republic Fleet Valkyrie: 2"}, type="Sprite", until=0.005)
+        start_time = time.perf_counter()
+        self.say("in ensure_drones_attacking")
+        self.say(f"target priority list: {target_priority_list}")
+        valid_enemies = []
+        drones_attacking = self.tree.find_node({"_hint": "Drones Republic Fleet Valkyrie: 2"}, type="Sprite")
         if not drones_attacking: # find suitable target for drones to attack
 
             for target in target_priority_list:
 
                 if target == "Any": # Lock any enemy present. Have to find a different UI element to search for them instead
                     overview_enemies = self.tree.find_node({"_name": "scrollentry"}, type="OverviewScrollEntry", select_many=True, contains=True)
-                    random_enemy = random.choice(overview_enemies)
-                    random_enemy_name = random_enemy.attrs.get("_name", None)
-                    if random_enemy_name != "scrollentry_49662" and random_enemy_name != "scrollentry_47951" and random_enemy_name != "scrollentry_49661" and random_enemy_name != None:
-                        print(f"Clicking target {random_enemy}")
-                        self.click_node(random_enemy)
-                        time.sleep(0.050)
-                        gui.press('f')
-                        break
+                    
+                    # Filter out all objects in overview that arent npc ships
+                    for overview_enemy in overview_enemies:
+                        overview_enemy_name = overview_enemy.attrs.get("_name", None)
+                        if overview_enemy_name != "scrollentry_49662" and overview_enemy_name != "scrollentry_47951" and overview_enemy_name != "scrollentry_49661" and overview_enemy_name != None:
+                            valid_enemies.append(overview_enemy)
+
+                    random_enemy = random.choice(valid_enemies)
+                    self.say(f"Clicking target {random_enemy}")
+                    self.click_node(random_enemy)
+                    time.sleep(0.050)
+                    gui.press('f')
+                    break
                 else:
-                    enemy_present = self.tree.find_node({"_text": target}, type="OverviewLabel", contains=True)
+                    enemy_present = self.tree.find_node({"_text": target, "_hint": target}, type="OverviewLabel", contains=True)
+                    self.say(f"enemy present in ensure_drones_attacking: {enemy_present}")
                     if enemy_present:
-                        print(f"Clicking target {target}")
+                        self.say(f"Clicking target {target}")
                         self.click_node(enemy_present)
                         time.sleep(0.050)
                         gui.press('f')
-                        break         
-            
+                        break
+
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")
 
     def find_target_of_drones(self):
-        print("in find_target_of_drones")
+        self.say("in find_target_of_drones")
         drone_attacking_target = self.tree.find_node({"_hint": "Drones Republic Fleet Valkyrie:"}, type="Sprite", contains=True)
         if drone_attacking_target:
             self.click_node(drone_attacking_target, y_offset=-150) # Click target above drone attacking target icon. Should be around target lock portrait
@@ -284,31 +348,72 @@ class AbyssalFilamentBot(Bot):
             return False
 
     def ensure_missile_launchers_active(self):
-        print("in ensure_missile_launchers_active")
+        self.say("in ensure_missile_launchers_active")
+        start_time = time.perf_counter()
         missile_launcher_active = self.tree.find_node({"_name": "ModuleButton_1877", "ramp_active": True}, type="ModuleButton")
         if not missile_launcher_active:
             drones_have_target = self.find_target_of_drones()
-            print(f"drones have target: {drones_have_target}")
+            self.say(f"drones have target: {drones_have_target}")
             if drones_have_target:
                 time.sleep(0.05)
                 gui.press('f1')
 
-    def check_drone_hp(self):
-        shield_gauge_nodes = self.tree.find_node({"_name": "shieldGauge"}, type="HealthGauge", select_many=True)
-        test_node_id = shield_gauge_nodes.children[-1]
-        drone_shield_damage_node = self.tree.nodes[test_node_id]
-        #print(f"drone armor damage node id: {drone_armor_damage_node}")
-        current_drone_shield_hp_percent  = drone_shield_damage_node.attrs['_displayX'] / (drone_shield_damage_node.attrs['_displayX'] + drone_shield_damage_node.attrs['_displayWidth'])
-        self.say(f"current drone shield: {current_drone_shield_hp_percent}")    
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")
 
-    def loot_cache(self, loot_collected):
+    def check_drone_hp(self, drone_recall_percent):
+        #drone_in_space_nodes = self.tree.find_root_nodes({"_name": "shieldGauge"}, type="HealthGauge", select_many=True, contains=False, stop_at_value="DroneInSpaceEntry")
+        self.say("in check_drone_hp")
+        start_time = time.perf_counter()
 
-        loot_wreck_button = self.tree.find_node({"_setText": "Loot All"}, type="EveLabelMedium")
-        if loot_wreck_button:
-            self.say("Clicked loot wreck button")
-            self.click_node(loot_wreck_button)
-            loot_collected = True
-            return loot_collected
+        drones_in_space = self.tree.find_node({"_name": "entry_"}, type="DroneInSpaceEntry", contains=True, select_many=True)
+        
+        for drone in drones_in_space:
+            shield_node = self.tree.find_child_node(address=drone.address, stop_at_key="_name", stop_at_value="shieldGauge")
+            if shield_node:
+                drone_shield_node = self.tree.nodes[shield_node.children[-1]]
+                current_drone_shield_hp_percent = drone_shield_node.attrs['_displayX'] / (drone_shield_node.attrs['_displayX'] + drone_shield_node.attrs['_displayWidth'])
+                self.say(f"current drone shield: {current_drone_shield_hp_percent}")
+                if current_drone_shield_hp_percent <= drone_recall_percent:
+                    self.say("recalling drone")
+                    self.click_node(shield_node, right_click=True)
+                    time.sleep(0.5)
+                    return_drone_text = self.wait_for({"_setText": "Return to Drone Bay"}, type="TextBody", until=1.5)
+                    if return_drone_text:
+                        self.click_node(return_drone_text)
+        
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"check_drone_hp execution time: {execution_time:.6f} seconds")
+
+    def shoot_wreck(self):
+        self.say("in shoot_wreck")
+        start_time = time.perf_counter()
+
+        loot_cache_overview = self.tree.find_node({"_text": "Triglavian Bioadaptive Cache"}, type="OverviewLabel")
+        if loot_cache_overview:
+            self.say("Clicking loot cache target")
+            gui.keyDown('ctrl')
+            time.sleep(0.050)
+            self.click_node(loot_cache_overview)
+            time.sleep(0.050)
+            gui.keyUp('ctrl')
+            time.sleep(0.050)
+            gui.press('f1')
+        
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")
+
+    def loot_cache(self):
+        self.say("in loot cache")
+
+        loot_all_button = self.tree.find_node({"_name": "invLootAllBtn"}, type="Button")
+        if loot_all_button:
+            self.say("Clicked loot all button on wreck")
+            self.click_node(loot_all_button)
+            return
         
         # Loot cache already destroyed. just need to loot
         loot_cache_wreck = self.tree.find_node({"_text": "Triglavian Bioadaptive Cache Wreck"}, type="OverviewLabel", contains=True)
@@ -320,33 +425,14 @@ class AbyssalFilamentBot(Bot):
             time.sleep(0.050)
             gui.keyUp('q')
             time.sleep(0.25)
-            # self.click_node(loot_cache_wreck, right_click=True)
-            # time.sleep(0.25)
-            # open_cargo_option = self.wait_for({"_setText": "Open Cargo"}, type="TextBody")
-            # if open_cargo_option:
-            #     self.click_node(open_cargo_option)
 
         open_cargo = self.tree.find_node({"_name": "selectedItemOpenCargo"}, type="SelectedItemButton")
         if open_cargo:
             self.say("Clicked loot cargo")
             self.click_node(open_cargo)
 
-        loot_cache_overview = self.tree.find_node({"_text": "Triglavian Bioadaptive Cache"}, type="OverviewLabel")
-        if loot_cache_overview:
-            self.say("Clicking loot cache target")
-            gui.keyDown('ctrl')
-            time.sleep(0.050)
-            self.click_node(loot_cache_overview)
-            time.sleep(0.050)
-            gui.keyUp('ctrl')
-            time.sleep(3)
-            gui.press('f1')
-            time.sleep(2)
-
-        return loot_collected
-
-    def approach_and_take_gate(self):
-        print("in approach and take gate")
+    def take_gate(self):
+        self.say("in take gate")
 
         # recall drones
         gui.keyDown('shift')
@@ -355,11 +441,20 @@ class AbyssalFilamentBot(Bot):
         time.sleep(0.05)
         gui.keyUp('shift')
 
-        transfer_gate = self.tree.find_node({"_text": "Transfer Conduit (Triglavian)", "_hint": "Transfer Conduit (Triglavian)"}, type="OverviewLabel")
+        # Wait for drones to be recalled
+        drones_in_bay = self.tree.find_node({"_setText": "Drones in Space (0/5)"}, type="EveLabelMedium")
+        
+        while not drones_in_bay:
+
+            time.sleep(0.25)
+
+            drones_in_bay = self.tree.find_node({"_setText": "Drones in Space (0/5)"}, type="EveLabelMedium")
+
+        transfer_gate = self.tree.find_node({"_setText": "Transfer Conduit (Triglavian)", "_hint": "Transfer Conduit (Triglavian)"}, type="OverviewLabel")
         if transfer_gate:
             self.click_node(transfer_gate)
 
-        in_new_room = self.wait_for({"_text": "Triglavian Bioadaptive Cache"}, type="OverviewLabel", until=0.005)
+        in_new_room = self.tree.find_node({"_text": "Triglavian Bioadaptive Cache"}, type="OverviewLabel")
 
         while not in_new_room:
             
@@ -369,48 +464,86 @@ class AbyssalFilamentBot(Bot):
             
             time.sleep(1)
 
-            in_new_room = self.wait_for({"_text": "Triglavian Bioadaptive Cache"}, type="OverviewLabel", until=0.005)
+            in_new_room = self.tree.find_node({"_text": "Triglavian Bioadaptive Cache"}, type="OverviewLabel")
+
+    def orbit_gate(self):
+        self.say("in orbit_gate")
+
+        gate = self.tree.find_node({"_text": "Conduit (Triglavian)"}, type="OverviewLabel", contains=True)
+        if gate:
+            self.click_node(gate)
+            orbit_gate =  self.tree.find_node({"_name": "selectedItemOrbit"}, type="SelectedItemButton")
+            if orbit_gate:
+                self.click_node(orbit_gate)
 
     def main(self):
+        
+        #self.wait_for({"_name": "aaaaaaaaaa"}, type="MenuEntryView")
 
-        #self.wait_for({"_name": "aaaaaaaaaa"}, type="MenuEntryView")     
+        # while True:
+
+        #     max_drones_deployed_in_space = self.tree.find_node({"_setText": "Drones in Space (2/5)"}, type="EveLabelMedium")
+        #     while not max_drones_deployed_in_space:
+        #         self.ensure_drones_deployed(0.75)
+        #         max_drones_deployed_in_space = self.tree.find_node({"_setText": "Drones in Space (2/5)"}, type="EveLabelMedium")
 
         self.use_filament()
 
         room_number = 1
-        print(f"in room #{room_number}")
+        self.say(f"in room #{room_number}")
 
         while room_number < 4: # all filaments have 3 rooms except the special T5 / T6 single room
-            self.start_room()
             loot_collected = False
+            self.start_room()
             # Wait a few seconds while overview targets settle after jumping in
-            time.sleep(5)
-            target_priority_list = self.check_room_type()
+            time.sleep(3)
+            target_priority_list, drone_recall_percent = self.check_room_type()
             enemy_count = self.count_enemies()
+            
+            # Record isk amount in cargo prior to determine when loot has been collected
+            isk_in_cargo_node = self.tree.find_node({"_name": "totalPriceLabel"}, type="EveLabelMedium")
+            room_start_isk_amount_in_cargo = int(isk_in_cargo_node.attrs['_setText'].split(' ')[0].replace(",", ""))
+            self.say(f"isk in cargo at start of room {room_number}: {room_start_isk_amount_in_cargo}")
 
-            while (enemy_count > 0) or (loot_collected == False):
+            while (enemy_count > 0):
+                self.say(f"loot collected is: {loot_collected}")
+                
                 self.get_targets(target_priority_list)
-                self.ensure_drones_deployed()
+                
+                max_drones_deployed_in_space = self.tree.find_node({"_setText": "Drones in Space (2/5)"}, type="EveLabelMedium")
+                while not max_drones_deployed_in_space:
+                    self.ensure_drones_deployed(drone_recall_percent)
+                    max_drones_deployed_in_space = self.tree.find_node({"_setText": "Drones in Space (2/5)"}, type="EveLabelMedium")
+
                 self.ensure_drones_attacking(target_priority_list)
                 self.ensure_missile_launchers_active()
                 self.ensure_active_modules_on()
+                self.check_drone_hp(drone_recall_percent)
                 
-                # Destroy loot cache and / or loot it
-                if enemy_count < 4:
-                    if not loot_collected:
-                        print("Collecting loot")
-                        loot_collected = self.loot_cache(loot_collected)
-                    else:
-                        print("Loot already collected")
-
                 enemy_count = self.count_enemies()
 
-            self.approach_and_take_gate()
+                if loot_collected == False:
+                    self.loot_cache()
+                else:
+                    self.orbit_gate()
+
+                # Destroy loot cache
+                if enemy_count < 5:
+                    self.shoot_wreck()
+
+                isk_in_cargo_node = self.tree.find_node({"_name": "totalPriceLabel"}, type="EveLabelMedium")
+                if isk_in_cargo_node:
+                    if 'ISK' in isk_in_cargo_node.attrs['_setText']:
+                        current_isk_amount_in_cargo = int(isk_in_cargo_node.attrs['_setText'].split(' ')[0].replace(",", ""))
+                        if current_isk_amount_in_cargo > room_start_isk_amount_in_cargo:
+                            loot_collected = True
+                            self.say(f"setting loot collected to {loot_collected}")
+
+            self.take_gate()
 
             # Recall drones and take gate
 
             room_number += 1
-            print(f"Entering room #{room_number}")
             self.say(f"Entering room #{room_number}")
 
 
