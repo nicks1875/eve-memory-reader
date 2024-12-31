@@ -160,8 +160,7 @@ class UITree(object):
             if isinstance(node, list):
                 return None
             
-            # Check if the current node has the desired key-value pair
-            #if getattr(node, stop_at_key, None) == stop_at_value:
+            # Check if the current node has the desired key-value pair    
             if node.attrs.get(stop_at_key, None) == stop_at_value:
                 return node
             

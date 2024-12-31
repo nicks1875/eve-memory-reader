@@ -241,7 +241,8 @@ class AbyssalFilamentBot(Bot):
 
         targets_clicked = 0
 
-        num__targets_locked = self.tree.find_node(type="ActiveTargetOnBracket", select_many=True)
+        num__targets_locked = self.tree.find_node({"_name": "target"}, type="TargetInBar", select_many=True)
+        self.say(f"num__targets_locked: {num__targets_locked}")
         if len(num__targets_locked) < 3:
             
             for target in target_priority_list:
@@ -276,24 +277,20 @@ class AbyssalFilamentBot(Bot):
         execution_time = end_time - start_time
         self.say(f"{inspect.currentframe().f_code.co_name} execution time: {execution_time:.6f} seconds")
 
-    def ensure_drones_deployed(self, drone_recall_percent):
+    def ensure_drones_deployed(self):
         self.say("in ensure_drones_deployed")
         start_time = time.perf_counter()
 
-        drone_in_bay = self.tree.find_node({"_name": "entry_"}, type="DroneInBayEntry", contains=True)
+        drones_deployed = self.tree.find_node({"_setText": "Drones in Space (2/5)"}, type="EveLabelMedium")
+        if not drones_deployed:
+            self.say("no drones deployed")
+            gui.keyDown('shift')
+            time.sleep(0.050)
+            gui.press('f')
+            time.sleep(0.050)
+            gui.keyUp('shift')
+            time.sleep(0.050)
 
-        shield_node = self.tree.find_child_node(address=drone_in_bay.address, stop_at_key="_name", stop_at_value="shieldGauge")
-        if shield_node:
-            drone_shield_node = self.tree.nodes[shield_node.children[-1]]
-            drone_bay_current_shield_hp_percent = drone_shield_node.attrs['_displayX'] / (drone_shield_node.attrs['_displayX'] + drone_shield_node.attrs['_displayWidth'])
-            
-            if drone_bay_current_shield_hp_percent >= drone_recall_percent:
-                
-                self.click_node(shield_node, right_click=True)
-                time.sleep(0.5)
-                launch_drone_text = self.wait_for({"_setText": "Launch Drone"}, type="TextBody", until=1.5)
-                if launch_drone_text:
-                    self.click_node(launch_drone_text)
                 
         end_time = time.perf_counter()
         execution_time = end_time - start_time
@@ -318,12 +315,13 @@ class AbyssalFilamentBot(Bot):
                         if overview_enemy_name != "scrollentry_49662" and overview_enemy_name != "scrollentry_47951" and overview_enemy_name != "scrollentry_49661" and overview_enemy_name != None:
                             valid_enemies.append(overview_enemy)
 
-                    random_enemy = random.choice(valid_enemies)
-                    self.say(f"Clicking target {random_enemy}")
-                    self.click_node(random_enemy)
-                    time.sleep(0.050)
-                    gui.press('f')
-                    break
+                    if valid_enemies:
+                        random_enemy = random.choice(valid_enemies)
+                        self.say(f"Clicking target {random_enemy}")
+                        self.click_node(random_enemy)
+                        time.sleep(0.050)
+                        gui.press('f')
+                        break
                 else:
                     enemy_present = self.tree.find_node({"_text": target, "_hint": target}, type="OverviewLabel", contains=True)
                     self.say(f"enemy present in ensure_drones_attacking: {enemy_present}")
@@ -376,12 +374,16 @@ class AbyssalFilamentBot(Bot):
                 current_drone_shield_hp_percent = drone_shield_node.attrs['_displayX'] / (drone_shield_node.attrs['_displayX'] + drone_shield_node.attrs['_displayWidth'])
                 self.say(f"current drone shield: {current_drone_shield_hp_percent}")
                 if current_drone_shield_hp_percent <= drone_recall_percent:
-                    self.say("recalling drone")
-                    self.click_node(shield_node, right_click=True)
-                    time.sleep(0.5)
-                    return_drone_text = self.wait_for({"_setText": "Return to Drone Bay"}, type="TextBody", until=1.5)
-                    if return_drone_text:
-                        self.click_node(return_drone_text)
+                    self.say("recalling drones")
+                    gui.keyDown('shift')
+                    time.sleep(0.050)
+                    gui.press('r')
+                    time.sleep(0.050)
+                    gui.keyUp('shift')
+                    time.sleep(0.050)
+
+                    self.wait_for({"_setText": "Drones in Space (0/5)"}, type="EveLabelMedium", until=15)
+
         
         end_time = time.perf_counter()
         execution_time = end_time - start_time
@@ -431,6 +433,17 @@ class AbyssalFilamentBot(Bot):
             self.say("Clicked loot cargo")
             self.click_node(open_cargo)
 
+    def exit_filament(self):
+
+        # Wait for filament timer to disappear indicating we've exited back to normal space
+        in_filament = self.tree.find_node({"_name": "abyssalContentExpirationTimer"}, type="Timer")
+        
+        while in_filament:
+
+            time.sleep(0.25)
+
+            in_filament = self.tree.find_node({"_name": "abyssalContentExpirationTimer"}, type="Timer")
+
     def take_gate(self):
         self.say("in take gate")
 
@@ -449,15 +462,15 @@ class AbyssalFilamentBot(Bot):
             time.sleep(0.25)
 
             drones_in_bay = self.tree.find_node({"_setText": "Drones in Space (0/5)"}, type="EveLabelMedium")
-
-        transfer_gate = self.tree.find_node({"_setText": "Transfer Conduit (Triglavian)", "_hint": "Transfer Conduit (Triglavian)"}, type="OverviewLabel")
-        if transfer_gate:
-            self.click_node(transfer_gate)
-
+            
         in_new_room = self.tree.find_node({"_text": "Triglavian Bioadaptive Cache"}, type="OverviewLabel")
 
         while not in_new_room:
             
+            transfer_gate = self.tree.find_node({"_setText": "Transfer Conduit (Triglavian)", "_hint": "Transfer Conduit (Triglavian)"}, type="OverviewLabel")
+            if transfer_gate:
+                self.click_node(transfer_gate)
+
             approach_transfer_gate = self.tree.find_node({"_name": "selectedItemActivateGate"}, type="SelectedItemButton")
             if approach_transfer_gate:
                 self.click_node(approach_transfer_gate)
@@ -477,7 +490,14 @@ class AbyssalFilamentBot(Bot):
                 self.click_node(orbit_gate)
 
     def main(self):
-        
+
+        #self.wait_for({"_name": "aaaaaaaaaa"}, type="MenuEntryView")
+
+        # while True:
+
+        #     self.ensure_drones_deployed()
+        #     time.sleep(5)
+
         #self.wait_for({"_name": "aaaaaaaaaa"}, type="MenuEntryView")
 
         # while True:
@@ -487,64 +507,72 @@ class AbyssalFilamentBot(Bot):
         #         self.ensure_drones_deployed(0.75)
         #         max_drones_deployed_in_space = self.tree.find_node({"_setText": "Drones in Space (2/5)"}, type="EveLabelMedium")
 
-        self.use_filament()
+        while True:
 
-        room_number = 1
-        self.say(f"in room #{room_number}")
+            self.use_filament()
 
-        while room_number < 4: # all filaments have 3 rooms except the special T5 / T6 single room
-            loot_collected = False
-            self.start_room()
-            # Wait a few seconds while overview targets settle after jumping in
-            time.sleep(3)
-            target_priority_list, drone_recall_percent = self.check_room_type()
-            enemy_count = self.count_enemies()
-            
-            # Record isk amount in cargo prior to determine when loot has been collected
-            isk_in_cargo_node = self.tree.find_node({"_name": "totalPriceLabel"}, type="EveLabelMedium")
-            room_start_isk_amount_in_cargo = int(isk_in_cargo_node.attrs['_setText'].split(' ')[0].replace(",", ""))
-            self.say(f"isk in cargo at start of room {room_number}: {room_start_isk_amount_in_cargo}")
-
-            while (enemy_count > 0):
-                self.say(f"loot collected is: {loot_collected}")
-                
-                self.get_targets(target_priority_list)
-                
-                max_drones_deployed_in_space = self.tree.find_node({"_setText": "Drones in Space (2/5)"}, type="EveLabelMedium")
-                while not max_drones_deployed_in_space:
-                    self.ensure_drones_deployed(drone_recall_percent)
-                    max_drones_deployed_in_space = self.tree.find_node({"_setText": "Drones in Space (2/5)"}, type="EveLabelMedium")
-
-                self.ensure_drones_attacking(target_priority_list)
-                self.ensure_missile_launchers_active()
-                self.ensure_active_modules_on()
-                self.check_drone_hp(drone_recall_percent)
-                
-                enemy_count = self.count_enemies()
-
-                if loot_collected == False:
-                    self.loot_cache()
-                else:
-                    self.orbit_gate()
-
-                # Destroy loot cache
-                if enemy_count < 5:
-                    self.shoot_wreck()
-
-                isk_in_cargo_node = self.tree.find_node({"_name": "totalPriceLabel"}, type="EveLabelMedium")
-                if isk_in_cargo_node:
-                    if 'ISK' in isk_in_cargo_node.attrs['_setText']:
-                        current_isk_amount_in_cargo = int(isk_in_cargo_node.attrs['_setText'].split(' ')[0].replace(",", ""))
-                        if current_isk_amount_in_cargo > room_start_isk_amount_in_cargo:
-                            loot_collected = True
-                            self.say(f"setting loot collected to {loot_collected}")
-
-            self.take_gate()
-
-            # Recall drones and take gate
-
-            room_number += 1
+            room_number = 1
             self.say(f"Entering room #{room_number}")
+
+            while room_number < 4: # all filaments have 3 rooms except the special T5 / T6 single room
+                loot_collected = False
+                self.start_room()
+                # Wait a few seconds while overview targets settle after jumping in
+                time.sleep(3)
+                target_priority_list, drone_recall_percent = self.check_room_type()
+                enemy_count = self.count_enemies()
+                
+                # Record isk amount in cargo prior to determine when loot has been collected
+                isk_in_cargo_node = self.tree.find_node({"_name": "totalPriceLabel"}, type="EveLabelMedium")
+                room_start_isk_amount_in_cargo = int(isk_in_cargo_node.attrs['_setText'].split(' ')[0].replace(",", ""))
+                self.say(f"isk in cargo at start of room {room_number}: {room_start_isk_amount_in_cargo}")
+
+                while (enemy_count > 0):
+                    self.say(f"loot collected is: {loot_collected}")
+                    
+                    self.get_targets(target_priority_list)
+                    
+                    max_drones_deployed_in_space = self.tree.find_node({"_setText": "Drones in Space (2/5)"}, type="EveLabelMedium")
+                    while not max_drones_deployed_in_space:
+                        self.ensure_drones_deployed()
+                        max_drones_deployed_in_space = self.tree.find_node({"_setText": "Drones in Space (2/5)"}, type="EveLabelMedium")
+
+                    self.ensure_drones_attacking(target_priority_list)
+                    self.ensure_missile_launchers_active()
+                    self.ensure_active_modules_on()
+                    self.check_drone_hp(drone_recall_percent)
+                    
+                    enemy_count = self.count_enemies()
+
+                    if loot_collected == False:
+                        self.loot_cache()
+                    else:
+                        self.orbit_gate()
+
+                    # Destroy loot cache
+                    if enemy_count < 5:
+                        self.shoot_wreck()
+
+                    isk_in_cargo_node = self.tree.find_node({"_name": "totalPriceLabel"}, type="EveLabelMedium")
+                    if isk_in_cargo_node:
+                        if 'ISK' in isk_in_cargo_node.attrs['_setText']:
+                            current_isk_amount_in_cargo = int(isk_in_cargo_node.attrs['_setText'].split(' ')[0].replace(",", ""))
+                            if current_isk_amount_in_cargo > room_start_isk_amount_in_cargo:
+                                loot_collected = True
+                                self.say(f"setting loot collected to {loot_collected}")
+
+                if room_number < 3:
+                    self.take_gate()
+                else:
+                    self.exit_filament()
+
+                # Recall drones and take gate
+
+                room_number += 1
+
+            self.say("Filament has finished")
+
+            time.sleep(30)
 
 
 
